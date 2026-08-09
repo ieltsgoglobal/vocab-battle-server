@@ -17,7 +17,6 @@ pub struct AppState {
     waiting: VecDeque<Player>,
     matches: HashMap<Uuid, MatchState>,
     player_rooms: HashMap<Uuid, Uuid>,
-    next_question: usize,
 }
 
 impl AppState {
@@ -26,7 +25,6 @@ impl AppState {
             waiting: VecDeque::new(),
             matches: HashMap::new(),
             player_rooms: HashMap::new(),
-            next_question: 0,
         }
     }
 
@@ -80,9 +78,11 @@ impl AppState {
 
     fn start_match(&mut self, first: Player, second: Player) {
         let room_id = first.id;
-        let match_state = MatchState::new([first.clone(), second.clone()], self.next_question);
+        let match_state = MatchState::new(
+            [first.clone(), second.clone()],
+            (Uuid::new_v4().as_u128() % question_count() as u128) as usize,
+        );
         let first_question = match_state.current_question();
-        self.next_question = (self.next_question + 1) % question_count();
 
         self.player_rooms.insert(first.id, room_id);
         self.player_rooms.insert(second.id, room_id);
