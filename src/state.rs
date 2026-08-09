@@ -2,7 +2,7 @@ use crate::{
     match_state::MatchState,
     messages::ServerMessage,
     player::Player,
-    questions::{question_at, question_count},
+    questions::{battle_question_count, question_at, question_count},
 };
 use std::{
     collections::{HashMap, VecDeque},
@@ -82,7 +82,7 @@ impl AppState {
         let room_id = first.id;
         let match_state = MatchState::new([first.clone(), second.clone()], self.next_question);
         let first_question = match_state.current_question();
-        self.next_question += 1;
+        self.next_question = (self.next_question + 1) % question_count();
 
         self.player_rooms.insert(first.id, room_id);
         self.player_rooms.insert(second.id, room_id);
@@ -165,6 +165,6 @@ impl AppState {
 
         match_state.has_bot()
             && !match_state.is_done()
-            && match_state.question_number() <= question_count()
+            && match_state.question_number() <= battle_question_count()
     }
 }

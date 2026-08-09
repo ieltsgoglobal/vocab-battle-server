@@ -1,7 +1,7 @@
 use crate::{
     messages::ServerMessage,
     player::Player,
-    questions::{Question, question_at, question_count},
+    questions::{Question, battle_question_count, question_at},
 };
 use std::collections::HashMap;
 use uuid::Uuid;
@@ -62,7 +62,7 @@ impl MatchState {
     }
 
     pub fn is_done(&self) -> bool {
-        self.question_number > question_count()
+        self.question_number > battle_question_count()
     }
 
     pub fn send_next_question(&self) {
@@ -84,7 +84,7 @@ impl MatchState {
     fn score_answers(&mut self) {
         let question = self.current_question();
         for (player_id, answer) in &self.answers {
-            if answer == question.answer {
+            if answer == &question.answer {
                 *self.scores.entry(*player_id).or_default() += 1;
             }
         }

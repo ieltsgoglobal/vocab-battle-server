@@ -15,10 +15,12 @@ use ws::ws_handler;
 #[tokio::main]
 async fn main() {
     dotenvy::from_filename(".env.local").ok();
+    questions::init();
 
     let state = Arc::new(Mutex::new(AppState::new()));
     let app = Router::new()
         .route("/", get(home))
+        .route("/health", get(health))
         .route("/ws", get(ws_handler))
         .with_state(state);
 
@@ -46,4 +48,8 @@ ws.onclose = () => status.textContent += " closed";
 </body>
 </html>"#,
     )
+}
+
+async fn health() -> ([(&'static str, &'static str); 1], &'static str) {
+    ([("access-control-allow-origin", "*")], "ok")
 }

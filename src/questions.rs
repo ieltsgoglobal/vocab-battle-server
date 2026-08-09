@@ -1,50 +1,49 @@
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
+use std::sync::OnceLock;
 
-#[derive(Clone, Serialize)]
+const DEFAULT_BATTLE_QUESTION_COUNT: usize = 7;
+
+#[derive(Clone, Deserialize, Serialize)]
 pub struct Question {
-    pub word: &'static str,
-    pub options: [&'static str; 4],
+    pub word: String,
+    pub options: [String; 4],
     #[serde(skip_serializing)]
-    pub answer: &'static str,
+    pub answer: String,
 }
 
-const QUESTIONS: [Question; 5] = [
-    Question {
-        word: "Ephemeral",
-        options: [
-            "Lasts forever",
-            "Exists briefly",
-            "Very dangerous",
-            "Easy to understand",
-        ],
-        answer: "Exists briefly",
-    },
-    Question {
-        word: "Benevolent",
-        options: ["Kind", "Cruel", "Fast", "Weak"],
-        answer: "Kind",
-    },
-    Question {
-        word: "Meticulous",
-        options: ["Careful", "Lazy", "Aggressive", "Funny"],
-        answer: "Careful",
-    },
-    Question {
-        word: "Obsolete",
-        options: ["Modern", "Outdated", "Beautiful", "Expensive"],
-        answer: "Outdated",
-    },
-    Question {
-        word: "Ambiguous",
-        options: ["Clear", "Uncertain", "Powerful", "Helpful"],
-        answer: "Uncertain",
-    },
-];
+static QUESTIONS: OnceLock<Vec<Question>> = OnceLock::new();
+
+pub fn init() {
+    questions();
+}
 
 pub fn question_at(index: usize) -> Question {
-    QUESTIONS[index % QUESTIONS.len()].clone()
+    let questions = questions();
+    questions[index % questions.len()].clone()
 }
 
 pub fn question_count() -> usize {
-    QUESTIONS.len()
+    questions().len()
+}
+
+pub fn battle_question_count() -> usize {
+    DEFAULT_BATTLE_QUESTION_COUNT
+}
+
+fn questions() -> &'static [Question] {
+    QUESTIONS.get_or_init(|| {
+        let questions: Vec<Question> =
+            serde_json::from_str(include_str!("../data/questions.json")).expect("valid questions.json");
+
+        assert!(!questions.is_empty(), "questions.json must contain questions");
+        for question in &questions {
+            assert!(
+                question.options.contains(&question.answer),
+                "answer must be one of the options for {}",
+                question.word
+            );
+        }
+
+        questions
+    })
 }
